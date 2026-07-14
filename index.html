@@ -1792,6 +1792,38 @@ async function syncToCloud() {
     }
     btn.innerText = "Зберегти в хмару";
 }
+let saveTimeout;
+async function autoSave() {
+    clearTimeout(saveTimeout);
+    
+    saveTimeout = setTimeout(async () => {
+        // Збираємо всі значення з полів введення
+        const allInputs = document.querySelectorAll('input, select, textarea');
+        const data = {};
+        allInputs.forEach(input => {
+            if (input.id) data[input.id] = input.value;
+        });
+        // Додаємо також підсумкові суми (текст)
+        data['total-budget'] = document.getElementById('total-budget')?.innerText;
+
+        try {
+            await fetch(GOOGLE_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            console.log("Всі дані збережено!");
+        } catch (e) {
+            console.error("Помилка автозбереження:", e);
+        }
+    }, 2000);
+}
+
+// Активуємо автозбереження для всього сайту
+document.querySelectorAll('input, select, textarea').forEach(element => {
+    element.addEventListener('input', autoSave);
+});
 </script>
 </body>
 </html>
