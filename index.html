@@ -1824,6 +1824,27 @@ async function autoSave() {
 document.querySelectorAll('input, select, textarea').forEach(element => {
     element.addEventListener('input', autoSave);
 });
+// Функція завантаження даних при відкритті сторінки
+async function loadData() {
+    try {
+        // Ми звертаємося до Google Таблиці і просимо дані
+        const response = await fetch(GOOGLE_APP_URL); 
+        const data = await response.json();
+
+        // Заповнюємо поля, якщо вони є в таблиці
+        if (data.transport) document.getElementById('override-transport').value = data.transport;
+        if (data.hotel) document.getElementById('override-hotel').value = data.hotel;
+        // Оновлюємо розрахунки після завантаження
+        if (typeof calculateTrip === 'function') calculateTrip();
+        
+        console.log("Дані успішно завантажено з хмари!");
+    } catch (e) {
+        console.warn("Дані ще не завантажені або порожні:", e);
+    }
+}
+
+// Викликаємо цю функцію, як тільки сторінка завантажилась
+window.addEventListener('load', loadData);
 </script>
 </body>
 </html>
