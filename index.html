@@ -1803,8 +1803,13 @@ async function autoSave() {
         allInputs.forEach(input => {
             if (input.id) data[input.id] = input.value;
         });
-        // Додаємо також підсумкові суми (текст)
+        
         data['total-budget'] = document.getElementById('total-budget')?.innerText;
+
+        // ДОДАНО: Пакуємо наші масиви в хмару (Архів, Каса, Склад)
+        data.savedTrips = savedTrips;
+        data.transactions = transactions;
+        data.bulletInventory = bulletInventory;
 
         try {
             await fetch(GOOGLE_APP_URL, {
@@ -1813,37 +1818,68 @@ async function autoSave() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            console.log("Всі дані збережено!");
+            console.log("Повна синхронізація з хмарою успішна!");
         } catch (e) {
             console.error("Помилка автозбереження:", e);
         }
     }, 2000);
 }
 
-// Активуємо автозбереження для всього сайту
+// Активуємо автозбереження при введенні тексту
 document.querySelectorAll('input, select, textarea').forEach(element => {
     element.addEventListener('input', autoSave);
 });
+
+// ДОДАНО: Змушуємо будь-який клік по кнопках (напр. "Зберегти звіт в архів") запускати автозбереження
+document.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Даємо 500мс, щоб локальні функції встигли додати звіт, а потім відправляємо в хмару
+        setTimeout(autoSave, 500); 
+    });
+});
+
 // Функція завантаження даних при відкритті сторінки
 async function loadData() {
     try {
-        // Ми звертаємося до Google Таблиці і просимо дані
         const response = await fetch(GOOGLE_APP_URL); 
         const data = await response.json();
 
-        // Заповнюємо поля, якщо вони є в таблиці
-        if (data.transport) document.getElementById('override-transport').value = data.transport;
-        if (data.hotel) document.getElementById('override-hotel').value = data.hotel;
-        // Оновлюємо розрахунки після завантаження
-        if (typeof calculateTrip === 'function') calculateTrip();
-        
-        console.log("Дані успішно завантажено з хмари!");
+        // 1. Відновлюємо поля
+        const allInputs = document.querySelectorAll('input, select, textarea');
+        allInputs.forEach(input => {
+            if (input.id && data[input.id] !== undefined) {
+                input.value = data[input.id];
+            }
+        });
+
+        // 2. Відновлюємо Архів звітів з хмари
+        if (data.savedTrips && data.savedTrips.length > 0) {
+            savedTrips = data.savedTrips;
+            localStorage.setItem('phoenix_saved_trips', JSON.stringify(savedTrips));
+            renderArchivedTrips();
+        }
+
+        // 3. Відновлюємо Журнал касових операцій з хмари
+        if (data.transactions && data.transactions.length > 0) {
+            transactions = data.transactions;
+            localStorage.setItem('phoenix_transactions', JSON.stringify(transactions));
+            renderTransactions();
+        }
+
+        // 4. Відновлюємо склад куль з хмари
+        if (data.bulletInventory && data.bulletInventory.length > 0) {
+            bulletInventory = data.bulletInventory;
+            renderBulletTable();
+        }
+
+        if (typeof recalcEverything === 'function') recalcEverything();
+        console.log("Усі дані успішно завантажено з хмари!");
     } catch (e) {
-        console.warn("Дані ще не завантажені або порожні:", e);
+        console.warn("Дані ще не завантажені або таблиця порожня:", e);
     }
 }
 
-// Викликаємо цю функцію, як тільки сторінка завантажилась
+// Викликаємо функцію завантаження при старті
 window.addEventListener('load', loadData);
 </script>
 </body>
