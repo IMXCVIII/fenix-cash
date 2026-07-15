@@ -1087,22 +1087,21 @@
         document.getElementById('view-report-modal').classList.add('hidden');
     }
 
-    // Універсальне повідомлення у кастомному вікні (замість забороненого alert)
-    function showNotification(title, message) {
-        const alertBox = document.getElementById('tg-simulated-notification');
-        const alertText = document.getElementById('tg-simulated-text');
-        
-        if (alertBox && alertText) {
-            alertText.innerHTML = `🌟 <b>${title}</b><br>${message}`;
-            alertBox.classList.remove('hidden');
-            alertBox.classList.remove('translate-y-10');
-            
-            setTimeout(() => {
-                alertBox.classList.add('translate-y-10');
-                setTimeout(() => { alertBox.classList.add('hidden'); }, 500);
-            }, 4500);
-        }
-    }
+    function deleteArchivedReport(id) {
+    // Видаляємо запис з локального масиву
+    savedTrips = savedTrips.filter(t => t.id !== id);
+    
+    // Зберігаємо оновлений список у локальну пам'ять
+    localStorage.setItem('phoenix_saved_trips', JSON.stringify(savedTrips));
+    
+    // Оновлюємо інтерфейс
+    renderArchivedTrips();
+    
+    // ВАЖЛИВО: Одразу відправляємо оновлений список у Google Таблицю
+    autoSave(); 
+    
+    showNotification("Видалено", "Запис успішно видалено та синхронізовано з хмарою.");
+}
 
     // Розрахунок складу куль та оцінка дефіциту
     function calculateStock() {
@@ -1374,18 +1373,17 @@
         document.getElementById('cash-date').parentElement.classList.add('hidden');
     }
 
-    // Видалення конкретної транзакції
     function deleteTransaction(id) {
-        transactions = transactions.filter(tx => tx.id !== id);
-        saveTransactionsLocally();
-        renderTransactions();
-        showNotification("Видалено", "Операцію успішно видалено з історії.");
-        
-        // Якщо ми видаляємо ту, що зараз редагується - скасовуємо редагування
-        if (editingTransactionId === id) {
-            cancelEdit();
-        }
-    }
+    transactions = transactions.filter(tx => tx.id !== id);
+    saveTransactionsLocally();
+    renderTransactions();
+    
+    // Додайте цей виклик для синхронізації з Google:
+    autoSave(); 
+    
+    showNotification("Видалено", "Операцію успішно видалено.");
+    if (editingTransactionId === id) cancelEdit();
+}
 
     // Збереження масиву у LocalStorage
     function saveTransactionsLocally() {
