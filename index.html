@@ -1172,19 +1172,42 @@
             list.appendChild(row);
         });
     }
-
-    // Зміна кількості банок кнопками +/-
+    
+        //Підрахунок куль
     function changeTins(index, amount) {
         bulletInventory[index].tins = Math.max(0, bulletInventory[index].tins + amount);
         
-        // Якщо кількість впала до 5 і менше, імітуємо Telegram сповіщення
-        if (bulletInventory[index].tins <= 5 && amount < 0) {
-            triggerTgSimulatedAlert(bulletInventory[index].name, bulletInventory[index].tins);
+        // Ось ця частина додає перевірку на 5 банок:
+        if (bulletInventory[index].tins === 5 && amount < 0) {
+            sendRealEmailAlert(bulletInventory[index].name, bulletInventory[index].tins);
         }
         
         recalcEverything();
+        if (typeof autoSave === 'function') autoSave(); 
     }
+    
+    function sendRealEmailAlert(bulletName, tins) {
+       
+        // ВПИШІТЬ ТУТ СВІЙ РЕАЛЬНИЙ EMAIL:
+        const myEmail = "yegorchenko09812@gmail.com"; 
+        
+        const payload = {
+            action: "send_email",
+            email: myEmail,
+            bulletName: bulletName,
+            tins: tins
+        };
 
+        fetch(GOOGLE_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        showNotification("Увага!", `Критичний залишок ${bulletName}. Лист відправлено на пошту!`);
+    }
+    
     // Функція зміни назви партії куль
     function editBulletName(index) {
         const currentName = bulletInventory[index].name;
