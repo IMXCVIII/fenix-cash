@@ -1938,9 +1938,11 @@ async function loadData() {
 // Викликаємо функцію завантаження при старті
 window.addEventListener('load', loadData);
 
+// Додаємо цю функцію, щоб прибрати помилку "showNotification is not defined"
 function showNotification(title, message) {
-    // Це просте вікно, яке з'явиться в браузері
-    alert(title + ": " + message);
+    console.log(title + ": " + message); // Виведе повідомлення в консоль браузера, а не в вікно
+    // Якщо хочете повідомлення на екрані, розкоментуйте рядок нижче:
+    // alert(title + ": " + message);
 }
 </script>
 </body>
