@@ -1153,9 +1153,19 @@
                 <td class="p-4 text-center font-bold text-base ${isLow ? 'text-red-600' : 'text-slate-800'}">${item.tins}</td>
                 <td class="p-4 text-center">${statusBadge}</td>
                 <td class="p-4 text-right">
-                    <div class="flex justify-end gap-1">
+                    <div class="flex items-center justify-end gap-1">
+                        <!-- Нова кнопка: Редагувати -->
+                        <button onclick="editBulletName(${index})" class="text-slate-400 hover:text-blue-600 p-1.5 rounded-md transition-all" title="Змінити назву">
+                            <span class="material-icons text-[16px]">edit</span>
+                        </button>
+                        
                         <button onclick="changeTins(${index}, -1)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold p-1 rounded-md flex items-center transition-all"><span class="material-icons text-base">remove</span></button>
                         <button onclick="changeTins(${index}, 1)" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold p-1 rounded-md flex items-center transition-all"><span class="material-icons text-base">add</span></button>
+                        
+                        <!-- Нова кнопка: Видалити -->
+                        <button onclick="deleteBullet(${index})" class="text-slate-400 hover:text-red-600 p-1.5 rounded-md transition-all ml-1" title="Видалити партію">
+                            <span class="material-icons text-[16px]">delete</span>
+                        </button>
                     </div>
                 </td>
             `;
@@ -1175,6 +1185,31 @@
         recalcEverything();
     }
 
+    // Функція зміни назви партії куль
+    function editBulletName(index) {
+        const currentName = bulletInventory[index].name;
+        const newName = prompt("Введіть нову назву для цієї партії куль:", currentName);
+        
+        if (newName !== null && newName.trim() !== "") {
+            bulletInventory[index].name = newName.trim();
+            renderBulletTable(); // Оновлюємо таблицю
+            if (typeof autoSave === 'function') autoSave(); // Синхронізуємо з хмарою
+            showNotification("Оновлено", "Назву партії успішно змінено.");
+        }
+    }
+
+    // Функція видалення партії куль зі складу
+    function deleteBullet(index) {
+        const itemName = bulletInventory[index].name;
+        // Запитуємо підтвердження, щоб не видалити випадково
+        if (confirm(`Ви впевнені, що хочете повністю видалити "${itemName}" зі складу?`)) {
+            bulletInventory.splice(index, 1);
+            recalcEverything(); // Перераховуємо залишки
+            if (typeof autoSave === 'function') autoSave(); // Синхронізуємо з хмарою
+            showNotification("Видалено", `Партію "${itemName}" видалено зі складу.`);
+        }
+    }
+   
     // Відкриття та закриття модалки для додавання нових партій куль
     function openAddBulletModal() {
         document.getElementById('add-bullet-modal').classList.remove('hidden');
